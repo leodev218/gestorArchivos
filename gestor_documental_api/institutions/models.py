@@ -1,31 +1,209 @@
+
 from django.db import models
+from django.db.models import Q
+
 
 class Institution(models.Model):
-    name = models.CharField("Nombre oficial", max_length=250)
-    short_name = models.CharField("Nombre corto", max_length=120, blank=True)
-    dane_code = models.CharField("Código DANE", max_length=30, blank=True)
-    nit = models.CharField(max_length=30, blank=True)
-    city = models.CharField("Ciudad o municipio", max_length=100, blank=True)
-    department = models.CharField("Departamento", max_length=100, blank=True)
-    country = models.CharField(max_length=80, default="Colombia")
-    address = models.CharField("Dirección", max_length=250, blank=True)
-    email = models.EmailField(blank=True)
-    phone = models.CharField(max_length=50, blank=True)
-    operating_license = models.CharField("Licencia / resolución", max_length=250, blank=True)
-    education_secretariat = models.CharField("Secretaría de Educación", max_length=180, blank=True)
-    legal_representative = models.CharField(max_length=180, blank=True)
-    rector_name = models.CharField("Rector(a)", max_length=180, blank=True)
-    modality = models.CharField(max_length=120, blank=True)
-    schedules = models.JSONField(default=list, blank=True)
-    educational_cycles = models.JSONField(default=list, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
+    INSTITUTION_TYPES = [
+        ("ETDH", "Educación para el Trabajo y Desarrollo Humano"),
+        ("CLEI", "Educación para Jóvenes y Adultos - CLEI"),
+        ("FORMAL", "Educación formal"),
+        ("OTRA", "Otra"),
+    ]
+
+    name = models.CharField(
+        "Nombre oficial",
+        max_length=250
+    )
+
+    short_name = models.CharField(
+        "Nombre corto",
+        max_length=120,
+        blank=True
+    )
+
+    institution_type = models.CharField(
+        "Tipo de institución",
+        max_length=20,
+        choices=INSTITUTION_TYPES,
+        default="OTRA"
+    )
+
+    dane_code = models.CharField(
+        "Código DANE",
+        max_length=30,
+        blank=True
+    )
+
+    nit = models.CharField(
+        "NIT",
+        max_length=30,
+        blank=True
+    )
+
+    country = models.CharField(
+        "País",
+        max_length=80,
+        default="Colombia"
+    )
+
+    department = models.CharField(
+        "Departamento",
+        max_length=100,
+        blank=True
+    )
+
+    city = models.CharField(
+        "Ciudad o municipio",
+        max_length=100,
+        blank=True
+    )
+
+    locality = models.CharField(
+        "Localidad",
+        max_length=100,
+        blank=True
+    )
+
+    address = models.CharField(
+        "Dirección",
+        max_length=250,
+        blank=True
+    )
+
+    email = models.EmailField(
+        "Correo electrónico",
+        blank=True
+    )
+
+    phone = models.CharField(
+        "Teléfono",
+        max_length=50,
+        blank=True
+    )
+
+    website = models.URLField(
+    "Página web",
+    blank=True,
+    default=""
+    )
+
+    # Información legal
+
+    operating_license = models.CharField(
+        "Licencia de funcionamiento",
+        max_length=250,
+        blank=True
+    )
+
+    resolution_number = models.CharField(
+        "Número de resolución",
+        max_length=100,
+        blank=True
+    )
+
+    resolution_date = models.DateField(
+        "Fecha de resolución",
+        null=True,
+        blank=True
+    )
+
+    education_secretariat = models.CharField(
+        "Secretaría de Educación",
+        max_length=180,
+        blank=True
+    )
+
+    legal_representative = models.CharField(
+        "Representante legal",
+        max_length=180,
+        blank=True
+    )
+
+    # Información académica
+
+    rector_name = models.CharField(
+        "Rector(a)",
+        max_length=180,
+        blank=True
+    )
+
+    modality = models.CharField(
+        "Modalidad educativa",
+        max_length=120,
+        blank=True
+    )
+
+    schedules = models.JSONField(
+        "Jornadas",
+        default=list,
+        blank=True
+    )
+
+    educational_levels = models.JSONField(
+        "Niveles educativos",
+        default=list,
+        blank=True
+    )
+
+    educational_cycles = models.JSONField(
+        "Ciclos educativos",
+        default=list,
+        blank=True
+    )
+
+    programs = models.JSONField(
+        "Programas académicos",
+        default=list,
+        blank=True
+    )
+
+    observations = models.TextField(
+        "Observaciones",
+        blank=True
+    )
+
+    # Estado y auditoría básica
+
+    is_active = models.BooleanField(
+        "Institución activa",
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        "Fecha de creación",
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        "Última actualización",
+        auto_now=True
+    )
 
     class Meta:
         ordering = ["name"]
         verbose_name = "Institución"
         verbose_name_plural = "Instituciones"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["nit"],
+                condition=~Q(nit=""),
+                name="unique_institution_nit_nonempty"
+            ),
+            models.UniqueConstraint(
+                fields=["dane_code"],
+                condition=~Q(dane_code=""),
+                name="unique_institution_dane_nonempty"
+            ),
+        ]
+
+        indexes = [
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["department", "city"]),
+            models.Index(fields=["institution_type"]),
+        ]
 
     def __str__(self):
         return self.name
