@@ -3,6 +3,49 @@ from django.db import models
 from django.db.models import Q
 
 
+class TechnicalProgram(models.Model):
+
+    name = models.CharField(
+        "Nombre del programa",
+        max_length=200,
+        unique=True
+    )
+
+    code = models.CharField(
+        "Código del programa",
+        max_length=50,
+        blank=True
+    )
+
+    description = models.TextField(
+        "Descripción",
+        blank=True
+    )
+
+    is_active = models.BooleanField(
+        "Programa activo",
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        "Fecha de creación",
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        "Última actualización",
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Programa ETDH"
+        verbose_name_plural = "Catálogo de programas ETDH"
+
+    def __str__(self):
+        return self.name
+
+
 class Institution(models.Model):
 
     INSTITUTION_TYPES = [
@@ -10,6 +53,22 @@ class Institution(models.Model):
         ("CLEI", "Educación para Jóvenes y Adultos - CLEI"),
         ("FORMAL", "Educación formal"),
         ("OTRA", "Otra"),
+    ]
+
+    SCHEDULE_CHOICES = [
+        ("DIURNA", "Diurna"),
+        ("NOCTURNA", "Nocturna"),
+        ("SABATINA", "Sabatina"),
+        ("DOMINICAL", "Dominical"),
+    ]
+
+    CYCLE_CHOICES = [
+        ("CICLO_I", "Ciclo I"),
+        ("CICLO_II", "Ciclo II"),
+        ("CICLO_III", "Ciclo III"),
+        ("CICLO_IV", "Ciclo IV"),
+        ("CICLO_V", "Ciclo V"),
+        ("CICLO_VI", "Ciclo VI"),
     ]
 
     name = models.CharField(
@@ -84,9 +143,9 @@ class Institution(models.Model):
     )
 
     website = models.URLField(
-    "Página web",
-    blank=True,
-    default=""
+        "Página web",
+        blank=True,
+        default=""
     )
 
     # Información legal
@@ -141,22 +200,17 @@ class Institution(models.Model):
         blank=True
     )
 
-    educational_levels = models.JSONField(
-        "Niveles educativos",
-        default=list,
-        blank=True
-    )
-
     educational_cycles = models.JSONField(
         "Ciclos educativos",
         default=list,
         blank=True
     )
 
-    programs = models.JSONField(
-        "Programas académicos",
-        default=list,
-        blank=True
+    programs = models.ManyToManyField(
+        TechnicalProgram,
+        verbose_name="Programas académicos",
+        blank=True,
+        related_name="institutions"
     )
 
     observations = models.TextField(

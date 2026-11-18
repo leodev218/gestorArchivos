@@ -1,13 +1,42 @@
 
 from rest_framework import serializers
-from .models import Institution
+
+from .models import Institution, TechnicalProgram
+
+
+class ListMultipleChoiceField(serializers.MultipleChoiceField):
+    """
+    Permite mostrar opciones múltiples en el formulario HTML
+    de Django REST Framework y guardar los valores como listas.
+    """
+
+    def to_internal_value(self, data):
+        values = super().to_internal_value(data)
+        return list(values)
 
 
 class InstitutionSerializer(serializers.ModelSerializer):
 
+    schedules = ListMultipleChoiceField(
+        choices=Institution.SCHEDULE_CHOICES,
+        required=False
+    )
+
+    educational_cycles = ListMultipleChoiceField(
+        choices=Institution.CYCLE_CHOICES,
+        required=False
+    )
+
+    programs = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=TechnicalProgram.objects.filter(is_active=True),
+        required=False
+    )
+
     class Meta:
         model = Institution
         fields = "__all__"
+
         read_only_fields = [
             "id",
             "created_at",
@@ -58,34 +87,27 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
         return value
 
-    def validate_schedules(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError(
-                "Las jornadas deben enviarse como una lista."
-            )
+    def validate(self, attrs):
 
-        return value
+        attrs = super().validate(attrs)
 
-    def validate_educational_levels(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError(
-                "Los niveles educativos deben enviarse como una lista."
-            )
+        institution_type = attrs.get(
+            "institution_type",
+            getattr(self.instance, "institution_type", None)
+        )
 
-        return value
+        # ETDH: no utiliza ciclos CLEI.
+        if institution_type == "ETDH":
+            attrs["educational_cycles"] = []
+            return attrs
 
-    def validate_educational_cycles(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError(
-                "Los ciclos educativos deben enviarse como una lista."
-            )
+        # CLEI: no utiliza programas ETDH.
+        if institution_type == "CLEI":
+            attrs["programs"] = []
+            return attrs
 
-        return value
+        # Otros tipos: no utilizan ciclos CLEI ni programas ETDH.
+        attrs["educational_cycles"] = []
+        attrs["programs"] = []
 
-    def validate_programs(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError(
-                "Los programas deben enviarse como una lista."
-            )
-
-        return value
+        return attrs
