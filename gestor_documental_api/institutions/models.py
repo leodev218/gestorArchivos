@@ -5,15 +5,40 @@ from django.db.models import Q
 
 class TechnicalProgram(models.Model):
 
+    institution = models.ForeignKey(
+    "Institution",
+    on_delete=models.CASCADE,
+    verbose_name="Institución",
+    related_name="programs",
+    )
+
     name = models.CharField(
-        "Nombre del programa",
-        max_length=200,
-        unique=True
+        "Nombre oficial del programa",
+        max_length=200
     )
 
     code = models.CharField(
         "Código del programa",
         max_length=50,
+        blank=True
+    )
+
+    resolution_number = models.CharField(
+    "Número de resolución",
+    max_length=100,
+    blank=True,
+    default=""
+    )
+
+    resolution_date = models.DateField(
+        "Fecha de resolución",
+        null=True,
+        blank=True
+    )
+
+    education_secretariat = models.CharField(
+        "Secretaría de Educación que expide",
+        max_length=180,
         blank=True
     )
 
@@ -38,11 +63,26 @@ class TechnicalProgram(models.Model):
     )
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["institution__name", "name"]
         verbose_name = "Programa ETDH"
-        verbose_name_plural = "Catálogo de programas ETDH"
+        verbose_name_plural = "Programas ETDH"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["institution", "name"],
+                name="unique_program_name_per_institution"
+            )
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["institution", "is_active"]
+            )
+        ]
 
     def __str__(self):
+        if self.institution:
+            return f"{self.name} - {self.institution.name}"
         return self.name
 
 
@@ -51,15 +91,12 @@ class Institution(models.Model):
     INSTITUTION_TYPES = [
         ("ETDH", "Educación para el Trabajo y Desarrollo Humano"),
         ("CLEI", "Educación para Jóvenes y Adultos - CLEI"),
-        ("FORMAL", "Educación formal"),
-        ("OTRA", "Otra"),
     ]
 
     SCHEDULE_CHOICES = [
         ("DIURNA", "Diurna"),
         ("NOCTURNA", "Nocturna"),
-        ("SABATINA", "Sabatina"),
-        ("DOMINICAL", "Dominical"),
+        ("FINES_SEMANA", "Fines de semana"),
     ]
 
     CYCLE_CHOICES = [
@@ -70,6 +107,8 @@ class Institution(models.Model):
         ("CICLO_V", "Ciclo V"),
         ("CICLO_VI", "Ciclo VI"),
     ]
+
+    # Información general
 
     name = models.CharField(
         "Nombre oficial",
@@ -86,7 +125,7 @@ class Institution(models.Model):
         "Tipo de institución",
         max_length=20,
         choices=INSTITUTION_TYPES,
-        default="OTRA"
+        default="ETDH"
     )
 
     dane_code = models.CharField(
@@ -148,7 +187,7 @@ class Institution(models.Model):
         default=""
     )
 
-    # Información legal
+    # Información legal de la institución
 
     operating_license = models.CharField(
         "Licencia de funcionamiento",
@@ -204,13 +243,6 @@ class Institution(models.Model):
         "Ciclos educativos",
         default=list,
         blank=True
-    )
-
-    programs = models.ManyToManyField(
-        TechnicalProgram,
-        verbose_name="Programas académicos",
-        blank=True,
-        related_name="institutions"
     )
 
     observations = models.TextField(

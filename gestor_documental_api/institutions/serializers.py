@@ -111,3 +111,40 @@ class InstitutionSerializer(serializers.ModelSerializer):
         attrs["programs"] = []
 
         return attrs
+
+class TechnicalProgramSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TechnicalProgram
+        fields = "__all__"
+
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_name(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "El nombre del programa es obligatorio."
+            )
+
+        queryset = TechnicalProgram.objects.filter(
+            name__iexact=value
+        )
+
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Ya existe un programa registrado con este nombre."
+            )
+
+        return value
+
+    def validate_code(self, value):
+        return value.strip()

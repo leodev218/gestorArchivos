@@ -3,13 +3,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from core.views import health
-from institutions.views import InstitutionViewSet
+from institutions.views import InstitutionViewSet, TechnicalProgramViewSet
 from identity.views import InstitutionalIdentityViewSet
 from templates_manager.views import DocumentCategoryViewSet, DocumentTemplateViewSet
 from documents.views import GeneratedDocumentViewSet
 
 router = DefaultRouter()
 router.register("institutions", InstitutionViewSet)
+router.register("programs", TechnicalProgramViewSet)
 router.register("identities", InstitutionalIdentityViewSet)
 router.register("categories", DocumentCategoryViewSet)
 router.register("templates", DocumentTemplateViewSet)

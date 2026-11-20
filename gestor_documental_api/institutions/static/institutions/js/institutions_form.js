@@ -1,4 +1,5 @@
 
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const typeField = document.getElementById("id_institution_type");
@@ -7,15 +8,11 @@ document.addEventListener("DOMContentLoaded", function () {
         ".form-row.field-educational_cycles"
     );
 
-    const programsField = document.querySelector(
-        ".form-row.field-programs"
-    );
+    const programsField = document.getElementById("programs-group");
 
     function updateAcademicFields() {
 
-        if (!typeField) {
-            return;
-        }
+        if (!typeField) return;
 
         const selectedType = typeField.value;
 
