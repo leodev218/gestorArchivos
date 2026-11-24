@@ -1,4 +1,3 @@
-
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,7 +15,7 @@ from .serializers import (
 
 class InstitutionViewSet(ModelViewSet):
 
-    queryset = Institution.objects.all()
+    queryset = Institution.objects.prefetch_related("programs")
     serializer_class = InstitutionSerializer
 
     filter_backends = [
@@ -92,7 +91,7 @@ class InstitutionViewSet(ModelViewSet):
 
 class TechnicalProgramViewSet(ModelViewSet):
 
-    queryset = TechnicalProgram.objects.all()
+    queryset = TechnicalProgram.objects.select_related("institution")
     serializer_class = TechnicalProgramSerializer
 
     filter_backends = [
@@ -105,9 +104,11 @@ class TechnicalProgramViewSet(ModelViewSet):
         "name",
         "code",
         "description",
+        "institution__name",
     ]
 
     filterset_fields = [
+        "institution",
         "is_active",
     ]
 
@@ -152,21 +153,3 @@ class TechnicalProgramViewSet(ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
-
-    def destroy(self, request, *args, **kwargs):
-
-        program = self.get_object()
-
-        if program.institutions.exists():
-            return Response(
-                {
-                    "message": (
-                        "No se puede eliminar este programa porque "
-                        "está asignado a una o varias instituciones. "
-                        "Puedes desactivarlo en su lugar."
-                    )
-                },
-                status=status.HTTP_409_CONFLICT
-            )
-
-        return super().destroy(request, *args, **kwargs)
