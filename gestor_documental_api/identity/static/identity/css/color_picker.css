@@ -1,0 +1,24 @@
+
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.color-picker-input {
+    width: 55px;
+    height: 40px;
+    padding: 3px;
+    border: 1px solid #b8b8b8;
+    border-radius: 6px;
+    cursor: pointer;
+    background: white;
+}
+
+.color-hex-input {
+    width: 150px;
+    max-width: 100%;
+    font-family: monospace;
+    text-transform: uppercase;
+}
